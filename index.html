@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Claw Chess</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app">
+    <section class="panel hero">
+      <div>
+        <p class="eyebrow">GitHub Pages Demo</p>
+        <h1>Claw Chess</h1>
+        <p class="subtitle">A clean browser chess game with legal move validation, captured pieces, timers, and quick actions.</p>
+      </div>
+      <div class="hero-actions">
+        <button id="newGameBtn" class="primary">New Game</button>
+        <button id="flipBtn">Flip Board</button>
+      </div>
+    </section>
+
+    <section class="layout">
+      <div class="board-wrap panel">
+        <div class="status-bar">
+          <div>
+            <span class="label">Turn</span>
+            <strong id="turnLabel">White</strong>
+          </div>
+          <div>
+            <span class="label">State</span>
+            <strong id="stateLabel">In progress</strong>
+          </div>
+          <div>
+            <span class="label">Selected</span>
+            <strong id="selectedLabel">None</strong>
+          </div>
+        </div>
+        <div id="board" class="board" aria-label="Chess board"></div>
+      </div>
+
+      <aside class="sidebar">
+        <section class="panel player-card">
+          <div class="player-row">
+            <div>
+              <p class="label">White</p>
+              <h2>Player 1</h2>
+            </div>
+            <div class="timer" id="whiteTimer">10:00</div>
+          </div>
+          <div class="captured" id="whiteCaptured">Captured by Black: none</div>
+        </section>
+
+        <section class="panel player-card dark-card">
+          <div class="player-row">
+            <div>
+              <p class="label">Black</p>
+              <h2>Player 2</h2>
+            </div>
+            <div class="timer" id="blackTimer">10:00</div>
+          </div>
+          <div class="captured" id="blackCaptured">Captured by White: none</div>
+        </section>
+
+        <section class="panel controls">
+          <h3>Controls</h3>
+          <div class="button-grid">
+            <button id="undoBtn">Undo</button>
+            <button id="hintBtn">Show legal moves</button>
+            <button id="copyFenBtn">Copy FEN</button>
+            <button id="resetClockBtn">Reset clocks</button>
+          </div>
+          <label class="toggle-row">
+            <input type="checkbox" id="legalMovesToggle" checked />
+            Highlight legal moves
+          </label>
+        </section>
+
+        <section class="panel move-log-panel">
+          <div class="panel-header">
+            <h3>Move Log</h3>
+            <span id="moveCount">0 moves</span>
+          </div>
+          <ol id="moveLog" class="move-log"></ol>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/1.0.0/chess.min.js" integrity="sha512-+BVrj6hQdr2OD6M6By2vQjvD/8t58G2PumoefRg2fzGEylh4G6dkprdFM5lTyBC0bYKT1eZqUPVHtVHCnRvW2g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="app.js"></script>
+</body>
+</html>
