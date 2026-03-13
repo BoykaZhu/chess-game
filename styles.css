@@ -4,12 +4,13 @@
   --panel-border: rgba(148, 163, 184, 0.18);
   --text: #e5eefb;
   --muted: #94a3b8;
-  --accent: #60a5fa;
-  --light: #f0d9b5;
-  --dark: #b58863;
-  --legal: rgba(34, 197, 94, 0.45);
-  --selected: rgba(96, 165, 250, 0.55);
-  --last: rgba(250, 204, 21, 0.35);
+  --light: #f3dfc2;
+  --dark: #d4aa7d;
+  --piece-light: #faf7f0;
+  --piece-dark: #1b2432;
+  --legal: rgba(34, 197, 94, 0.35);
+  --selected: rgba(96, 165, 250, 0.45);
+  --last: rgba(250, 204, 21, 0.28);
 }
 * { box-sizing: border-box; }
 html, body { overflow-x: hidden; }
@@ -51,28 +52,64 @@ button.primary { background: linear-gradient(135deg, #3b82f6, #2563eb); }
 .board-wrap { padding: 16px; }
 .status-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
 .board {
-  width: min(100%, 720px); aspect-ratio: 1; display: grid; grid-template-columns: repeat(8, 1fr);
-  border-radius: 20px; overflow: hidden; border: 1px solid rgba(255,255,255,.08); margin: 0 auto;
+  width: min(100%, 720px);
+  aspect-ratio: 1 / 1;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  grid-template-rows: repeat(8, minmax(0, 1fr));
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.08);
+  margin: 0 auto;
   touch-action: manipulation;
+  background: #e4c59e;
 }
 .square {
-  position: relative; display: flex; align-items: center; justify-content: center;
-  font-size: clamp(1.8rem, 5.3vw, 4rem); user-select: none; padding: 0;
-  min-height: 38px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 1 / 1;
+  min-width: 0;
+  min-height: 0;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  margin: 0;
+  line-height: 1;
+  font-size: clamp(2.15rem, 6vw, 4.6rem);
+  font-weight: 700;
+  user-select: none;
+  box-shadow: none;
 }
-.square.light { background: var(--light); color: #1f2937; }
-.square.dark { background: var(--dark); color: #0f172a; }
+.square.light { background: var(--light); color: var(--piece-dark); }
+.square.dark { background: var(--dark); color: var(--piece-dark); }
+.square[data-piece-color="w"] { color: var(--piece-light); text-shadow: 0 1px 0 rgba(0,0,0,.32), 0 0 1px rgba(0,0,0,.45); }
+.square[data-piece-color="b"] { color: var(--piece-dark); text-shadow: 0 1px 0 rgba(255,255,255,.08); }
 .square.selected::after, .square.last-move::after, .square.legal::after {
-  content: ''; position: absolute; inset: 8px; border-radius: 50%; pointer-events: none;
+  content: '';
+  position: absolute;
+  pointer-events: none;
 }
-.square.selected::after { background: var(--selected); inset: 6px; border-radius: 16px; }
-.square.legal::after { background: var(--legal); inset: 30%; }
-.square.last-move::after { background: var(--last); inset: 10px; border-radius: 12px; }
+.square.selected::after {
+  inset: 4px;
+  border-radius: 10px;
+  background: var(--selected);
+}
+.square.legal::after {
+  width: 26%; height: 26%; left: 37%; top: 37%; border-radius: 999px; background: var(--legal);
+}
+.square.last-move::after {
+  inset: 0;
+  background: var(--last);
+}
 .square .coord {
-  position: absolute; font-size: .72rem; font-weight: 700; opacity: .75;
+  position: absolute; font-size: .66rem; font-weight: 700; opacity: .72;
 }
-.square .coord.file { bottom: 4px; right: 6px; }
-.square .coord.rank { top: 4px; left: 6px; }
+.square .coord.file { bottom: 3px; right: 5px; }
+.square .coord.rank { top: 3px; left: 5px; }
 .sidebar { display: grid; gap: 16px; }
 .player-card, .controls, .move-log-panel { padding: 18px 20px; }
 .dark-card { background: rgba(2, 6, 23, 0.88); }
@@ -100,11 +137,13 @@ button.primary { background: linear-gradient(135deg, #3b82f6, #2563eb); }
   .button-grid { grid-template-columns: 1fr 1fr; }
   .hero-actions { width: 100%; }
   .hero-actions button { flex: 1; min-width: 0; }
-  .square { font-size: clamp(1.45rem, 8.2vw, 2.5rem); }
-  .square .coord { font-size: .6rem; }
+  .board { width: 100%; }
+  .square { font-size: clamp(1.9rem, 9vw, 3.15rem); }
+  .square .coord { font-size: .56rem; }
   .timer { font-size: 1.35rem; }
 }
 @media (max-width: 420px) {
   .button-grid { grid-template-columns: 1fr; }
   .subtitle { font-size: 0.95rem; }
+  .square { font-size: clamp(1.72rem, 9.5vw, 2.7rem); }
 }

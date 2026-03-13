@@ -88,6 +88,7 @@ function renderBoard() {
     sq.type = 'button';
     sq.className = `square ${isLight ? 'light' : 'dark'}`;
     sq.dataset.square = square;
+    if (piece) sq.dataset.pieceColor = piece.color;
     sq.setAttribute('aria-label', `${square}${piece ? ` ${piece.color === 'w' ? '白' : '黑'}${piece.type}` : ''}`);
     if (square === selectedSquare) sq.classList.add('selected');
     if (lastMoveSquares.includes(square)) sq.classList.add('last-move');
