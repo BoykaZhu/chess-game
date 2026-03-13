@@ -232,10 +232,12 @@ document.getElementById('newGameBtn').addEventListener('click', () => {
   selectedSquare = null;
   hintedSquare = null;
   lastMoveSquares = [];
+  selectedLabel.textContent = 'None';
   renderMoveLog();
   updateCaptured();
   resetClocks();
   renderBoard();
+  toast('New game started');
 });
 
 document.getElementById('flipBtn').addEventListener('click', () => {
@@ -248,6 +250,7 @@ document.getElementById('undoBtn').addEventListener('click', () => {
   if (!move) return toast('Nothing to undo');
   lastMoveSquares = [];
   selectedSquare = null;
+  selectedLabel.textContent = 'None';
   activeColor = chess.turn();
   renderMoveLog();
   updateCaptured();
