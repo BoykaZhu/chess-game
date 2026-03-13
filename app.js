@@ -10,7 +10,11 @@ const whiteTimerEl = document.getElementById('whiteTimer');
 const blackTimerEl = document.getElementById('blackTimer');
 const legalMovesToggle = document.getElementById('legalMovesToggle');
 
-const chess = new Chess();
+const ChessCtor = window.Chess || window.exports?.Chess;
+if (!ChessCtor) {
+  throw new Error('Chess engine failed to load');
+}
+const chess = new ChessCtor();
 let selectedSquare = null;
 let hintedSquare = null;
 let boardFlipped = false;
@@ -149,7 +153,7 @@ function updateCaptured() {
     b: ['p','p','p','p','p','p','p','p','r','r','n','n','b','b','q','k']
   };
   const current = { w: [], b: [] };
-  for (const square of chess.SQUARES) {
+  for (const square of orderedSquares()) {
     const piece = chess.get(square);
     if (piece) current[piece.color].push(piece.type);
   }
