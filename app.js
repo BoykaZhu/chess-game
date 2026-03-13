@@ -9,14 +9,13 @@ const blackCapturedEl = document.getElementById('blackCaptured');
 const whiteTimerEl = document.getElementById('whiteTimer');
 const blackTimerEl = document.getElementById('blackTimer');
 const legalMovesToggle = document.getElementById('legalMovesToggle');
+const soundToggle = document.getElementById('soundToggle');
 
 const ChessCtor = window.Chess || window.exports?.Chess;
-if (!ChessCtor) {
-  throw new Error('Chess engine failed to load');
-}
+if (!ChessCtor) throw new Error('Chess engine failed to load');
 const chess = new ChessCtor();
+
 let selectedSquare = null;
-let hintedSquare = null;
 let boardFlipped = false;
 let lastMoveSquares = [];
 const initialSeconds = 600;
@@ -24,6 +23,7 @@ let whiteSeconds = initialSeconds;
 let blackSeconds = initialSeconds;
 let activeColor = 'w';
 let tickInterval = null;
+let audioCtx = null;
 
 const files = ['a','b','c','d','e','f','g','h'];
 const pieces = {
@@ -41,6 +41,38 @@ function orderedSquares() {
   return squares;
 }
 
+function labelColor(color) {
+  return color === 'w' ? '白方' : '黑方';
+}
+
+function playMoveSound(capture = false) {
+  if (!soundToggle.checked) return;
+  try {
+    audioCtx ??= new (window.AudioContext || window.webkitAudioContext)();
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = capture ? 'triangle' : 'sine';
+    osc.frequency.setValueAtTime(capture ? 520 : 660, now);
+    osc.frequency.exponentialRampToValueAtTime(capture ? 380 : 520, now + 0.08);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.08, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + 0.13);
+  } catch {}
+}
+
+function toast(message) {
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = message;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1600);
+}
+
 function renderBoard() {
   boardEl.innerHTML = '';
   const legalTargets = selectedSquare && legalMovesToggle.checked
@@ -53,8 +85,10 @@ function renderBoard() {
     const isLight = (files.indexOf(file) + rank) % 2 === 1;
     const piece = chess.get(square);
     const sq = document.createElement('button');
+    sq.type = 'button';
     sq.className = `square ${isLight ? 'light' : 'dark'}`;
     sq.dataset.square = square;
+    sq.setAttribute('aria-label', `${square}${piece ? ` ${piece.color === 'w' ? '白' : '黑'}${piece.type}` : ''}`);
     if (square === selectedSquare) sq.classList.add('selected');
     if (lastMoveSquares.includes(square)) sq.classList.add('last-move');
     if (legalTargets.has(square)) sq.classList.add('legal');
@@ -93,7 +127,7 @@ function handleSquareClick(square) {
 
   if (selectedSquare === square) {
     selectedSquare = null;
-    selectedLabel.textContent = 'None';
+    selectedLabel.textContent = '无';
     renderBoard();
     return;
   }
@@ -102,11 +136,11 @@ function handleSquareClick(square) {
   if (move) {
     lastMoveSquares = [move.from, move.to];
     selectedSquare = null;
-    selectedLabel.textContent = 'None';
+    selectedLabel.textContent = '无';
     activeColor = chess.turn();
+    playMoveSound(Boolean(move.captured));
     updateCaptured();
     renderMoveLog();
-    updateStatus();
     renderBoard();
     return;
   }
@@ -116,23 +150,23 @@ function handleSquareClick(square) {
     selectedLabel.textContent = square;
     renderBoard();
   } else {
-    toast('Illegal move');
+    toast('非法走子');
   }
 }
 
 function updateStatus() {
-  turnLabel.textContent = chess.turn() === 'w' ? 'White' : 'Black';
+  turnLabel.textContent = labelColor(chess.turn());
 
   if (chess.isCheckmate()) {
-    stateLabel.textContent = `Checkmate · ${chess.turn() === 'w' ? 'Black' : 'White'} wins`;
+    stateLabel.textContent = `将死 · ${labelColor(chess.turn() === 'w' ? 'b' : 'w')}获胜`;
     stopClock();
   } else if (chess.isDraw()) {
-    stateLabel.textContent = 'Draw';
+    stateLabel.textContent = '和棋';
     stopClock();
   } else if (chess.isCheck()) {
-    stateLabel.textContent = `${chess.turn() === 'w' ? 'White' : 'Black'} in check`;
+    stateLabel.textContent = `${labelColor(chess.turn())}被将军`;
   } else {
-    stateLabel.textContent = 'In progress';
+    stateLabel.textContent = '进行中';
   }
 }
 
@@ -144,7 +178,7 @@ function renderMoveLog() {
     li.textContent = `${Math.floor(i / 2) + 1}. ${history[i]}${history[i + 1] ? ` ${history[i + 1]}` : ''}`;
     moveLogEl.appendChild(li);
   }
-  moveCountEl.textContent = `${history.length} move${history.length === 1 ? '' : 's'}`;
+  moveCountEl.textContent = `${history.length} 步`;
 }
 
 function updateCaptured() {
@@ -158,10 +192,10 @@ function updateCaptured() {
     if (piece) current[piece.color].push(piece.type);
   }
 
-  const capturedByWhite = diffPieces(start.b, current.b).map(t => pieces['b' + t]).join(' ') || 'none';
-  const capturedByBlack = diffPieces(start.w, current.w).map(t => pieces['w' + t]).join(' ') || 'none';
-  blackCapturedEl.textContent = `Captured by White: ${capturedByWhite}`;
-  whiteCapturedEl.textContent = `Captured by Black: ${capturedByBlack}`;
+  const capturedByWhite = diffPieces(start.b, current.b).map(t => pieces['b' + t]).join(' ') || '无';
+  const capturedByBlack = diffPieces(start.w, current.w).map(t => pieces['w' + t]).join(' ') || '无';
+  blackCapturedEl.textContent = `被白方吃掉：${capturedByWhite}`;
+  whiteCapturedEl.textContent = `被黑方吃掉：${capturedByBlack}`;
 }
 
 function diffPieces(start, current) {
@@ -193,13 +227,13 @@ function startClock() {
     if (activeColor === 'w') {
       whiteSeconds = Math.max(0, whiteSeconds - 1);
       if (whiteSeconds === 0) {
-        stateLabel.textContent = 'White flagged · Black wins';
+        stateLabel.textContent = '白方超时 · 黑方获胜';
         stopClock();
       }
     } else {
       blackSeconds = Math.max(0, blackSeconds - 1);
       if (blackSeconds === 0) {
-        stateLabel.textContent = 'Black flagged · White wins';
+        stateLabel.textContent = '黑方超时 · 白方获胜';
         stopClock();
       }
     }
@@ -219,25 +253,16 @@ function resetClocks() {
   startClock();
 }
 
-function toast(message) {
-  const el = document.createElement('div');
-  el.className = 'toast';
-  el.textContent = message;
-  document.body.appendChild(el);
-  setTimeout(() => el.remove(), 1800);
-}
-
 document.getElementById('newGameBtn').addEventListener('click', () => {
   chess.reset();
   selectedSquare = null;
-  hintedSquare = null;
   lastMoveSquares = [];
-  selectedLabel.textContent = 'None';
+  selectedLabel.textContent = '无';
   renderMoveLog();
   updateCaptured();
   resetClocks();
   renderBoard();
-  toast('New game started');
+  toast('新对局已开始');
 });
 
 document.getElementById('flipBtn').addEventListener('click', () => {
@@ -247,37 +272,39 @@ document.getElementById('flipBtn').addEventListener('click', () => {
 
 document.getElementById('undoBtn').addEventListener('click', () => {
   const move = chess.undo();
-  if (!move) return toast('Nothing to undo');
+  if (!move) return toast('当前无法悔棋');
   lastMoveSquares = [];
   selectedSquare = null;
-  selectedLabel.textContent = 'None';
+  selectedLabel.textContent = '无';
   activeColor = chess.turn();
   renderMoveLog();
   updateCaptured();
   renderBoard();
+  toast('已悔棋');
 });
 
 document.getElementById('hintBtn').addEventListener('click', () => {
-  if (!selectedSquare) return toast('Select a piece first');
+  if (!selectedSquare) return toast('先选中一个棋子');
   const moves = chess.moves({ square: selectedSquare, verbose: true });
-  toast(moves.length ? `${selectedSquare}: ${moves.map(m => m.to).join(', ')}` : 'No legal moves');
+  toast(moves.length ? `${selectedSquare} 可走：${moves.map(m => m.to).join('、')}` : '没有合法走法');
 });
 
 document.getElementById('copyFenBtn').addEventListener('click', async () => {
   try {
     await navigator.clipboard.writeText(chess.fen());
-    toast('FEN copied');
+    toast('FEN 已复制');
   } catch {
-    toast('Copy failed');
+    toast('复制失败');
   }
 });
 
 document.getElementById('resetClockBtn').addEventListener('click', () => {
   resetClocks();
-  toast('Clocks reset');
+  toast('计时器已重置');
 });
 
 legalMovesToggle.addEventListener('change', renderBoard);
+soundToggle.addEventListener('change', () => toast(soundToggle.checked ? '已开启落子声音' : '已关闭落子声音'));
 
 renderMoveLog();
 updateCaptured();
